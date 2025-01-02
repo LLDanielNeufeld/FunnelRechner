@@ -76,6 +76,7 @@
                     <th>Users</th>
                     <th>Conversion Rate (to Start)</th>
                     <th>Conversion Rate (to Previous)</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -90,6 +91,13 @@
             { name: 'Checkout Started', users: 7500 },
             { name: 'Purchases', users: 3000 }
         ];
+
+        const benchmarks = {
+            'Product Views': { good: 45, average: 35 },
+            'Add to Cart': { good: 35, average: 25 },
+            'Checkout Started': { good: 65, average: 45 },
+            'Purchases': { good: 45, average: 25 }
+        };
 
         function updateChart() {
             const labels = stages.map(stage => stage.name);
@@ -137,10 +145,24 @@
             });
         }
 
+        function getHealthStatus(stageName, conversionRate) {
+            const benchmark = benchmarks[stageName];
+            if (!benchmark) return 'No Benchmark';
+
+            if (conversionRate >= benchmark.good) {
+                return 'Good';
+            } else if (conversionRate >= benchmark.average) {
+                return 'Average';
+            } else {
+                return 'Needs Improvement';
+            }
+        }
+
         function updateMetrics() {
             const metricsHtml = stages.map((stage, index) => {
                 const conversionRateToStart = ((stage.users / stages[0].users) * 100).toFixed(2);
                 const conversionRateToPrevious = index === 0 ? 100 : ((stage.users / stages[index - 1].users) * 100).toFixed(2);
+                const status = getHealthStatus(stage.name, conversionRateToStart);
 
                 return `
                     <div class="stage-container">
@@ -153,6 +175,7 @@
                             onchange="updateStage(${index}, this.value)" />
                         <p>Conversion Rate to Start: ${conversionRateToStart}%</p>
                         <p>Conversion Rate to Previous: ${conversionRateToPrevious}%</p>
+                        <p>Status: ${status}</p>
                     </div>
                 `;
             }).join('');
@@ -167,6 +190,7 @@
             const rowsHtml = stages.map((stage, index) => {
                 const conversionRateToStart = ((stage.users / stages[0].users) * 100).toFixed(2);
                 const conversionRateToPrevious = index === 0 ? 100 : ((stage.users / stages[index - 1].users) * 100).toFixed(2);
+                const status = getHealthStatus(stage.name, conversionRateToStart);
 
                 return `
                     <tr>
@@ -174,6 +198,7 @@
                         <td>${stage.users}</td>
                         <td>${conversionRateToStart}%</td>
                         <td>${conversionRateToPrevious}%</td>
+                        <td>${status}</td>
                     </tr>
                 `;
             }).join('');
