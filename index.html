@@ -2,102 +2,179 @@
 <html>
 <head>
     <title>Funnel Analytics</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.2/react.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.0.2/react-dom.min.js"></script>
-    <script src="https://unpkg.com/recharts@0.12.7/umd/Recharts.min.js"></script>
+    <!-- Recharts und Montserrat -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/recharts@2.10.3/umd/Recharts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Montserrat', sans-serif;
             background-color: #1e1e2f;
             color: #f5f5f5;
             margin: 0;
             padding: 0;
         }
-        #chart-container {
-            max-width: 800px;
-            margin: 20px auto;
+        #funnel-container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            background-color: #2a2a3f;
-            border-radius: 8px;
+        }
+        h2 {
+            color: #ffffff;
+            text-align: center;
         }
         input {
-            color: #fff;
-            background: #444;
-            border: 1px solid #666;
-            padding: 5px;
+            color: #ffffff;
+            background: #2a2a3f;
+            border: 1px solid #444;
+        }
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
         }
     </style>
 </head>
 <body>
-    <div id="chart-container"></div>
+    <div id="funnel-container">
+        <h2>Ecommerce Funnel Analysis</h2>
+        <div id="chart" style="height: 400px; margin-bottom: 20px;"></div>
+        <div id="metrics"></div>
+    </div>
+
     <script>
-        const { Component } = React;
-        const { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } = Recharts;
+        const funnelData = [
+            { stage: 'Page Views', users: 100000, conversionRate: 100 },
+            { stage: 'Product Views', users: 45000, conversionRate: 45 },
+            { stage: 'Add to Cart', users: 15000, conversionRate: 33.33 },
+            { stage: 'Checkout Started', users: 7500, conversionRate: 50 },
+            { stage: 'Purchases', users: 3000, conversionRate: 40 }
+        ];
 
-        class FunnelAnalysis extends Component {
-            constructor(props) {
-                super(props);
-                this.state = {
-                    funnelData: [
-                        { stage: 'Page Views', users: 100000, conversionRate: 100 },
-                        { stage: 'Product Views', users: 45000, conversionRate: 45 },
-                        { stage: 'Add to Cart', users: 15000, conversionRate: 33.33 },
-                        { stage: 'Checkout Started', users: 7500, conversionRate: 50 },
-                        { stage: 'Purchases', users: 3000, conversionRate: 40 }
-                    ]
-                };
-            }
+        const benchmarks = {
+            'Product Views': { good: 45, average: 35 },
+            'Add to Cart': { good: 35, average: 25 },
+            'Checkout Started': { good: 65, average: 45 },
+            'Purchases': { good: 45, average: 25 }
+        };
 
-            handleUserChange = (index, value) => {
-                const newFunnelData = [...this.state.funnelData];
-                const numValue = parseInt(value) || 0;
-                newFunnelData[index].users = numValue;
-
-                newFunnelData.forEach((item, i) => {
-                    if (i === 0) {
-                        item.conversionRate = 100;
-                    } else {
-                        item.conversionRate = ((item.users / newFunnelData[i - 1].users) * 100).toFixed(1);
-                    }
-                });
-
-                this.setState({ funnelData: newFunnelData });
-            };
-
-            render() {
-                return (
+        function updateMetrics() {
+            const metricsHtml = funnelData.map((stage, index) => {
+                const healthStatus = getHealthStatus(stage.stage, stage.conversionRate);
+                const statusHtml = healthStatus ? `
                     <div>
-                        <h2 style={{ textAlign: 'center' }}>Ecommerce Funnel Analysis</h2>
-                        <ResponsiveContainer width="100%" height={400}>
-                            <BarChart
-                                data={this.state.funnelData}
-                                layout="vertical"
-                                margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" />
-                                <YAxis dataKey="stage" type="category" />
-                                <Tooltip />
-                                <Bar dataKey="users" fill="#3b82f6" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                        {this.state.funnelData.map((stage, index) => (
-                            <div key={index} style={{ marginBottom: '10px' }}>
-                                <strong>{stage.stage}</strong>
-                                <input
-                                    type="number"
-                                    value={stage.users}
-                                    onChange={(e) => this.handleUserChange(index, e.target.value)}
-                                />
-                                <span> Conversion Rate: {stage.conversionRate}%</span>
-                            </div>
-                        ))}
+                        <p style="color: rgba(255,255,255,0.7); margin-bottom: 5px;">Status</p>
+                        <p style="color: ${healthStatus.color}; font-weight: bold;">${healthStatus.text}</p>
                     </div>
-                );
+                ` : '';
+
+                return `
+                    <div style="border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; padding-bottom: 20px;">
+                        <h3 style="margin-bottom: 10px;">${stage.stage}</h3>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                            <div>
+                                <p style="color: rgba(255,255,255,0.7); margin-bottom: 5px;">Users</p>
+                                <input 
+                                    type="number" 
+                                    value="${stage.users}"
+                                    onchange="handleUserChange(${index}, this.value)"
+                                    style="width: 100%; padding: 8px; border: 1px solid rgba(255,255,255,0.2); 
+                                           border-radius: 4px; background: rgba(0,0,0,0.2); color: white;"
+                                >
+                            </div>
+                            <div>
+                                <p style="color: rgba(255,255,255,0.7); margin-bottom: 5px;">Conversion Rate</p>
+                                <p style="font-size: 1.5rem; font-weight: bold;">${stage.conversionRate}%</p>
+                            </div>
+                            ${statusHtml}
+                        </div>
+                        ${benchmarks[stage.stage] ? `
+                            <div style="margin-top: 10px; font-size: 0.875rem; color: rgba(255,255,255,0.7);">
+                                Benchmarks: Good ≥ ${benchmarks[stage.stage].good}% | Average ≥ ${benchmarks[stage.stage].average}%
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('metrics').innerHTML = metricsHtml;
+            updateChart();
+        }
+
+        function handleUserChange(index, value) {
+            const numValue = parseInt(value) || 0;
+            funnelData[index].users = numValue;
+            
+            funnelData.forEach((item, i) => {
+                if (i === 0) {
+                    item.conversionRate = 100;
+                } else {
+                    item.conversionRate = ((item.users / funnelData[i-1].users) * 100).toFixed(1);
+                }
+            });
+            
+            updateMetrics();
+        }
+
+        function getHealthStatus(stage, conversionRate) {
+            if (!benchmarks[stage]) return null;
+            
+            if (conversionRate >= benchmarks[stage].good) {
+                return { color: '#4ade80', text: 'Good' };
+            } else if (conversionRate >= benchmarks[stage].average) {
+                return { color: '#facc15', text: 'Average' };
+            } else {
+                return { color: '#f87171', text: 'Needs Improvement' };
             }
         }
 
-        ReactDOM.render(<FunnelAnalysis />, document.getElementById('chart-container'));
+        function updateChart() {
+            if (typeof Recharts === 'undefined') {
+                console.error('Recharts is not defined. Ensure the library is loaded.');
+                return;
+            }
+
+            const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+            
+            const chart = React.createElement(ResponsiveContainer, { width: '100%', height: 400 },
+                React.createElement(BarChart, {
+                    data: funnelData,
+                    layout: 'vertical',
+                    margin: { top: 20, right: 30, left: 100, bottom: 5 }
+                },
+                    React.createElement(CartesianGrid, {
+                        strokeDasharray: '3 3',
+                        stroke: 'rgba(255,255,255,0.2)'
+                    }),
+                    React.createElement(XAxis, {
+                        type: 'number',
+                        stroke: 'white',
+                        tick: { fill: 'white' }
+                    }),
+                    React.createElement(YAxis, {
+                        dataKey: 'stage',
+                        type: 'category',
+                        stroke: 'white',
+                        tick: { fill: 'white' }
+                    }),
+                    React.createElement(Tooltip, {
+                        contentStyle: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            border: 'none',
+                            color: 'white'
+                        }
+                    }),
+                    React.createElement(Bar, {
+                        dataKey: 'users',
+                        fill: '#3b82f6'
+                    })
+                )
+            );
+
+            ReactDOM.render(chart, document.getElementById('chart'));
+        }
+
+        updateMetrics();
     </script>
 </body>
 </html>
