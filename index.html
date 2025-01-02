@@ -2,38 +2,102 @@
 <html>
 <head>
     <title>Funnel Analytics</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/recharts@2.10.3/umd/Recharts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.2/react.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/15.0.2/react-dom.min.js"></script>
+    <script src="https://unpkg.com/recharts@0.12.7/umd/Recharts.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2f;
+            color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        #chart-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #2a2a3f;
+            border-radius: 8px;
+        }
+        input {
+            color: #fff;
+            background: #444;
+            border: 1px solid #666;
+            padding: 5px;
+        }
+    </style>
 </head>
 <body>
-    <div id="chart"></div>
+    <div id="chart-container"></div>
     <script>
-        if (typeof Recharts === 'undefined') {
-            console.error('Recharts is not defined. Ensure the library is loaded.');
-        } else {
-            const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+        const { Component } = React;
+        const { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } = Recharts;
 
-            const data = [
-                { stage: 'Page Views', users: 100000 },
-                { stage: 'Product Views', users: 45000 },
-                { stage: 'Add to Cart', users: 15000 },
-                { stage: 'Checkout Started', users: 7500 },
-                { stage: 'Purchases', users: 3000 }
-            ];
+        class FunnelAnalysis extends Component {
+            constructor(props) {
+                super(props);
+                this.state = {
+                    funnelData: [
+                        { stage: 'Page Views', users: 100000, conversionRate: 100 },
+                        { stage: 'Product Views', users: 45000, conversionRate: 45 },
+                        { stage: 'Add to Cart', users: 15000, conversionRate: 33.33 },
+                        { stage: 'Checkout Started', users: 7500, conversionRate: 50 },
+                        { stage: 'Purchases', users: 3000, conversionRate: 40 }
+                    ]
+                };
+            }
 
-            const chart = React.createElement(ResponsiveContainer, { width: '100%', height: 400 },
-                React.createElement(BarChart, { data },
-                    React.createElement(CartesianGrid, { strokeDasharray: '3 3' }),
-                    React.createElement(XAxis, { dataKey: 'users' }),
-                    React.createElement(YAxis, { dataKey: 'stage' }),
-                    React.createElement(Tooltip, {}),
-                    React.createElement(Bar, { dataKey: 'users', fill: '#8884d8' })
-                )
-            );
+            handleUserChange = (index, value) => {
+                const newFunnelData = [...this.state.funnelData];
+                const numValue = parseInt(value) || 0;
+                newFunnelData[index].users = numValue;
 
-            ReactDOM.render(chart, document.getElementById('chart'));
+                newFunnelData.forEach((item, i) => {
+                    if (i === 0) {
+                        item.conversionRate = 100;
+                    } else {
+                        item.conversionRate = ((item.users / newFunnelData[i - 1].users) * 100).toFixed(1);
+                    }
+                });
+
+                this.setState({ funnelData: newFunnelData });
+            };
+
+            render() {
+                return (
+                    <div>
+                        <h2 style={{ textAlign: 'center' }}>Ecommerce Funnel Analysis</h2>
+                        <ResponsiveContainer width="100%" height={400}>
+                            <BarChart
+                                data={this.state.funnelData}
+                                layout="vertical"
+                                margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" />
+                                <YAxis dataKey="stage" type="category" />
+                                <Tooltip />
+                                <Bar dataKey="users" fill="#3b82f6" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                        {this.state.funnelData.map((stage, index) => (
+                            <div key={index} style={{ marginBottom: '10px' }}>
+                                <strong>{stage.stage}</strong>
+                                <input
+                                    type="number"
+                                    value={stage.users}
+                                    onChange={(e) => this.handleUserChange(index, e.target.value)}
+                                />
+                                <span> Conversion Rate: {stage.conversionRate}%</span>
+                            </div>
+                        ))}
+                    </div>
+                );
+            }
         }
+
+        ReactDOM.render(<FunnelAnalysis />, document.getElementById('chart-container'));
     </script>
 </body>
 </html>
