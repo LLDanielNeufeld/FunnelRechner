@@ -3,9 +3,9 @@
 <head>
     <title>Funnel Analytics</title>
     <!-- Recharts und Montserrat -->
-    <script src="https://cdn.jsdelivr.net/npm/recharts@2.10.3/umd/Recharts.min.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/recharts@2.10.3/umd/Recharts.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
@@ -129,6 +129,11 @@
         }
 
         function updateChart() {
+            if (typeof Recharts === 'undefined') {
+                console.error('Recharts is not defined. Ensure the library is loaded.');
+                return;
+            }
+
             const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
             
             const chart = React.createElement(ResponsiveContainer, { width: '100%', height: 400 },
@@ -137,16 +142,16 @@
                     layout: 'vertical',
                     margin: { top: 20, right: 30, left: 100, bottom: 5 }
                 },
-                    React.createElement(CartesianGrid, { 
+                    React.createElement(CartesianGrid, {
                         strokeDasharray: '3 3',
                         stroke: 'rgba(255,255,255,0.2)'
                     }),
-                    React.createElement(XAxis, { 
+                    React.createElement(XAxis, {
                         type: 'number',
                         stroke: 'white',
                         tick: { fill: 'white' }
                     }),
-                    React.createElement(YAxis, { 
+                    React.createElement(YAxis, {
                         dataKey: 'stage',
                         type: 'category',
                         stroke: 'white',
@@ -159,7 +164,7 @@
                             color: 'white'
                         }
                     }),
-                    React.createElement(Bar, { 
+                    React.createElement(Bar, {
                         dataKey: 'users',
                         fill: '#3b82f6'
                     })
