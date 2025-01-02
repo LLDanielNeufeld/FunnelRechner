@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Funnel Analytics</title>
+    <title>Trichteranalyse</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -68,12 +68,12 @@
 </head>
 <body>
     <div id="funnel-container">
-        <h2>Ecommerce Funnel Analysis</h2>
+        <h2>Ecommerce Trichteranalyse</h2>
         <table id="summary-table">
             <thead>
                 <tr>
-                    <th>Stage</th>
-                    <th>Conversion Rate (to Start)</th>
+                    <th>Stufe</th>
+                    <th>Konversionsrate (zum Start)</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -84,19 +84,32 @@
 
     <script>
         const stages = [
-            { name: 'Page Views', users: 100000 },
-            { name: 'Product Views', users: 45000 },
-            { name: 'Add to Cart', users: 15000 },
-            { name: 'Checkout Started', users: 7500 },
-            { name: 'Purchases', users: 3000 }
+            { name: 'Seitenaufrufe', users: 100000 },
+            { name: 'Produktansichten', users: 45000 },
+            { name: 'In den Warenkorb', users: 15000 },
+            { name: 'Checkout gestartet', users: 7500 },
+            { name: 'Käufe', users: 3000 }
         ];
 
         const benchmarks = {
-            'Product Views': { good: 45, average: 35 },
-            'Add to Cart': { good: 35, average: 25 },
-            'Checkout Started': { good: 65, average: 45 },
-            'Purchases': { good: 45, average: 25 }
+            'Produktansichten': { good: 45, average: 35 },
+            'In den Warenkorb': { good: 35, average: 25 },
+            'Checkout gestartet': { good: 65, average: 45 },
+            'Käufe': { good: 45, average: 25 }
         };
+
+        function getHealthStatus(stageName, conversionRate) {
+            const benchmark = benchmarks[stageName];
+            if (!benchmark) return 'Kein Benchmark';
+
+            if (conversionRate >= benchmark.good) {
+                return 'Gut ✅';
+            } else if (conversionRate >= benchmark.average) {
+                return 'Durchschnittlich ⚠️';
+            } else {
+                return 'Verbesserungsbedarf ❌';
+            }
+        }
 
         function updateChart() {
             const labels = stages.map(stage => stage.name);
@@ -105,7 +118,7 @@
             const data = {
                 labels: labels,
                 datasets: [{
-                    label: 'Users',
+                    label: 'Benutzer',
                     data: dataValues,
                     backgroundColor: '#3b82f6',
                 }]
@@ -162,17 +175,19 @@
         function updateMetrics() {
             const metricsHtml = stages.map((stage, index) => {
                 const conversionRateToStart = ((stage.users / stages[0].users) * 100).toFixed(2);
+                const status = getHealthStatus(stage.name, conversionRateToStart);
 
                 return `
                     <div class="stage-container">
                         <h3>${stage.name}</h3>
-                        <label for="users-${index}">Users:</label>
+                        <label for="users-${index}">Benutzer:</label>
                         <input 
                             id="users-${index}" 
                             type="number" 
                             value="${stage.users}" 
                             onchange="updateStage(${index}, this.value)" />
-                        <p>Conversion Rate to Start: ${conversionRateToStart}%</p>
+                        <p>Konversionsrate (zum Start): ${conversionRateToStart}%</p>
+                        <p>Status: ${status}</p>
                     </div>
                 `;
             }).join('');
