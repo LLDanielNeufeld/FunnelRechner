@@ -46,6 +46,22 @@
             outline: none;
             border-color: #3b82f6;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            color: #ffffff;
+        }
+        th {
+            background-color: #3b82f6;
+        }
     </style>
 </head>
 <body>
@@ -53,6 +69,17 @@
         <h2>Ecommerce Funnel Analysis</h2>
         <canvas id="chart" width="800" height="400"></canvas>
         <div id="metrics"></div>
+        <table id="summary-table">
+            <thead>
+                <tr>
+                    <th>Stage</th>
+                    <th>Users</th>
+                    <th>Conversion Rate (to Start)</th>
+                    <th>Conversion Rate (to Previous)</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <script>
@@ -112,7 +139,8 @@
 
         function updateMetrics() {
             const metricsHtml = stages.map((stage, index) => {
-                const conversionRate = ((stage.users / stages[0].users) * 100).toFixed(2);
+                const conversionRateToStart = ((stage.users / stages[0].users) * 100).toFixed(2);
+                const conversionRateToPrevious = index === 0 ? 100 : ((stage.users / stages[index - 1].users) * 100).toFixed(2);
 
                 return `
                     <div class="stage-container">
@@ -123,13 +151,34 @@
                             type="number" 
                             value="${stage.users}" 
                             onchange="updateStage(${index}, this.value)" />
-                        <p>Conversion Rate: ${conversionRate}%</p>
+                        <p>Conversion Rate to Start: ${conversionRateToStart}%</p>
+                        <p>Conversion Rate to Previous: ${conversionRateToPrevious}%</p>
                     </div>
                 `;
             }).join('');
 
             document.getElementById('metrics').innerHTML = metricsHtml;
+            updateSummaryTable();
             updateChart();
+        }
+
+        function updateSummaryTable() {
+            const tableBody = document.querySelector('#summary-table tbody');
+            const rowsHtml = stages.map((stage, index) => {
+                const conversionRateToStart = ((stage.users / stages[0].users) * 100).toFixed(2);
+                const conversionRateToPrevious = index === 0 ? 100 : ((stage.users / stages[index - 1].users) * 100).toFixed(2);
+
+                return `
+                    <tr>
+                        <td>${stage.name}</td>
+                        <td>${stage.users}</td>
+                        <td>${conversionRateToStart}%</td>
+                        <td>${conversionRateToPrevious}%</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tableBody.innerHTML = rowsHtml;
         }
 
         function updateStage(index, value) {
