@@ -25,65 +25,120 @@
             display: block;
             margin: 0 auto;
         }
+        .stage-container {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+        .stage-container h3 {
+            margin-bottom: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            background: #2a2a3f;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: #ffffff;
+        }
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
     </style>
 </head>
 <body>
     <div id="funnel-container">
         <h2>Ecommerce Funnel Analysis</h2>
         <canvas id="chart" width="800" height="400"></canvas>
+        <div id="metrics"></div>
     </div>
 
     <script>
-        // Daten für das Diagramm
-        const data = {
-            labels: ['Page Views', 'Product Views', 'Add to Cart', 'Checkout Started', 'Purchases'],
-            datasets: [{
-                label: 'Users',
-                data: [100000, 45000, 15000, 7500, 3000],
-                backgroundColor: '#3b82f6',
-            }]
-        };
+        const stages = [
+            { name: 'Page Views', users: 100000 },
+            { name: 'Product Views', users: 45000 },
+            { name: 'Add to Cart', users: 15000 },
+            { name: 'Checkout Started', users: 7500 },
+            { name: 'Purchases', users: 3000 }
+        ];
 
-        // Optionen für das Diagramm
-        const options = {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: '#1e1e2f',
-                    titleColor: '#ffffff',
-                    bodyColor: '#ffffff'
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    },
-                    ticks: {
-                        color: '#ffffff'
+        function updateChart() {
+            const labels = stages.map(stage => stage.name);
+            const dataValues = stages.map(stage => stage.users);
+
+            const data = {
+                labels: labels,
+                datasets: [{
+                    label: 'Users',
+                    data: dataValues,
+                    backgroundColor: '#3b82f6',
+                }]
+            };
+
+            const options = {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e1e2f',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff'
                     }
                 },
-                y: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#ffffff' }
                     },
-                    ticks: {
-                        color: '#ffffff'
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#ffffff' }
                     }
                 }
+            };
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            if (window.myChart) {
+                window.myChart.destroy();
             }
-        };
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: options
+            });
+        }
 
-        // Initialisierung des Diagramms
-        const ctx = document.getElementById('chart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: data,
-            options: options
-        });
+        function updateMetrics() {
+            const metricsHtml = stages.map((stage, index) => {
+                const conversionRate = index === 0 ? 100 : ((stages[index].users / stages[index - 1].users) * 100).toFixed(2);
+
+                return `
+                    <div class="stage-container">
+                        <h3>${stage.name}</h3>
+                        <label for="users-${index}">Users:</label>
+                        <input 
+                            id="users-${index}" 
+                            type="number" 
+                            value="${stage.users}" 
+                            onchange="updateStage(${index}, this.value)" />
+                        <p>Conversion Rate: ${conversionRate}%</p>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('metrics').innerHTML = metricsHtml;
+            updateChart();
+        }
+
+        function updateStage(index, value) {
+            stages[index].users = parseInt(value) || 0;
+            updateMetrics();
+        }
+
+        // Initial render
+        updateMetrics();
     </script>
 </body>
 </html>
