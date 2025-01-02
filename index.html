@@ -49,7 +49,9 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
         }
         table, th, td {
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -60,27 +62,24 @@
             color: #ffffff;
         }
         th {
-            background-color: #3b82f6;
+            background-color: transparent;
         }
     </style>
 </head>
 <body>
     <div id="funnel-container">
         <h2>Ecommerce Funnel Analysis</h2>
-        <canvas id="chart" width="800" height="400"></canvas>
-        <div id="metrics"></div>
         <table id="summary-table">
             <thead>
                 <tr>
                     <th>Stage</th>
-                    <th>Users</th>
                     <th>Conversion Rate (to Start)</th>
-                    <th>Conversion Rate (to Previous)</th>
-                    <th>Status</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
+        <canvas id="chart" width="800" height="400"></canvas>
+        <div id="metrics"></div>
     </div>
 
     <script>
@@ -145,24 +144,24 @@
             });
         }
 
-        function getHealthStatus(stageName, conversionRate) {
-            const benchmark = benchmarks[stageName];
-            if (!benchmark) return 'No Benchmark';
+        function updateSummaryTable() {
+            const tableBody = document.querySelector('#summary-table tbody');
+            const rowsHtml = stages.map((stage, index) => {
+                const conversionRateToStart = ((stage.users / stages[0].users) * 100).toFixed(2);
+                return `
+                    <tr>
+                        <td>${stage.name}</td>
+                        <td>${conversionRateToStart}%</td>
+                    </tr>
+                `;
+            }).join('');
 
-            if (conversionRate >= benchmark.good) {
-                return 'Good';
-            } else if (conversionRate >= benchmark.average) {
-                return 'Average';
-            } else {
-                return 'Needs Improvement';
-            }
+            tableBody.innerHTML = rowsHtml;
         }
 
         function updateMetrics() {
             const metricsHtml = stages.map((stage, index) => {
                 const conversionRateToStart = ((stage.users / stages[0].users) * 100).toFixed(2);
-                const conversionRateToPrevious = index === 0 ? 100 : ((stage.users / stages[index - 1].users) * 100).toFixed(2);
-                const status = getHealthStatus(stage.name, conversionRateToStart);
 
                 return `
                     <div class="stage-container">
@@ -174,8 +173,6 @@
                             value="${stage.users}" 
                             onchange="updateStage(${index}, this.value)" />
                         <p>Conversion Rate to Start: ${conversionRateToStart}%</p>
-                        <p>Conversion Rate to Previous: ${conversionRateToPrevious}%</p>
-                        <p>Status: ${status}</p>
                     </div>
                 `;
             }).join('');
@@ -183,27 +180,6 @@
             document.getElementById('metrics').innerHTML = metricsHtml;
             updateSummaryTable();
             updateChart();
-        }
-
-        function updateSummaryTable() {
-            const tableBody = document.querySelector('#summary-table tbody');
-            const rowsHtml = stages.map((stage, index) => {
-                const conversionRateToStart = ((stage.users / stages[0].users) * 100).toFixed(2);
-                const conversionRateToPrevious = index === 0 ? 100 : ((stage.users / stages[index - 1].users) * 100).toFixed(2);
-                const status = getHealthStatus(stage.name, conversionRateToStart);
-
-                return `
-                    <tr>
-                        <td>${stage.name}</td>
-                        <td>${stage.users}</td>
-                        <td>${conversionRateToStart}%</td>
-                        <td>${conversionRateToPrevious}%</td>
-                        <td>${status}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            tableBody.innerHTML = rowsHtml;
         }
 
         function updateStage(index, value) {
