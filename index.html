@@ -134,44 +134,48 @@
                 return;
             }
 
-            const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
-            
-            const chart = React.createElement(ResponsiveContainer, { width: '100%', height: 400 },
-                React.createElement(BarChart, {
-                    data: funnelData,
-                    layout: 'vertical',
-                    margin: { top: 20, right: 30, left: 100, bottom: 5 }
-                },
-                    React.createElement(CartesianGrid, {
-                        strokeDasharray: '3 3',
-                        stroke: 'rgba(255,255,255,0.2)'
-                    }),
-                    React.createElement(XAxis, {
-                        type: 'number',
-                        stroke: 'white',
-                        tick: { fill: 'white' }
-                    }),
-                    React.createElement(YAxis, {
-                        dataKey: 'stage',
-                        type: 'category',
-                        stroke: 'white',
-                        tick: { fill: 'white' }
-                    }),
-                    React.createElement(Tooltip, {
-                        contentStyle: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            border: 'none',
-                            color: 'white'
-                        }
-                    }),
-                    React.createElement(Bar, {
-                        dataKey: 'users',
-                        fill: '#3b82f6'
-                    })
-                )
-            );
+            try {
+                const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+                
+                const chart = React.createElement(ResponsiveContainer, { width: '100%', height: 400 },
+                    React.createElement(BarChart, {
+                        data: funnelData,
+                        layout: 'vertical',
+                        margin: { top: 20, right: 30, left: 100, bottom: 5 }
+                    },
+                        React.createElement(CartesianGrid, {
+                            strokeDasharray: '3 3',
+                            stroke: 'rgba(255,255,255,0.2)'
+                        }),
+                        React.createElement(XAxis, {
+                            type: 'number',
+                            stroke: 'white',
+                            tick: { fill: 'white' }
+                        }),
+                        React.createElement(YAxis, {
+                            dataKey: 'stage',
+                            type: 'category',
+                            stroke: 'white',
+                            tick: { fill: 'white' }
+                        }),
+                        React.createElement(Tooltip, {
+                            contentStyle: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                border: 'none',
+                                color: 'white'
+                            }
+                        }),
+                        React.createElement(Bar, {
+                            dataKey: 'users',
+                            fill: '#3b82f6'
+                        })
+                    )
+                );
 
-            ReactDOM.render(chart, document.getElementById('chart'));
+                ReactDOM.render(chart, document.getElementById('chart'));
+            } catch (error) {
+                console.error('Error rendering chart:', error);
+            }
         }
 
         updateMetrics();
